@@ -31,3 +31,6 @@ Tested with python 2.7.3 and Tektronix TDS684A.
          none               no flow control
       Using both hardware and software flow control together is not supported
 
+![Image](gfx/tdsgrab.png?raw=true)
+![Image](gfx/plot.png?raw=true)
+
