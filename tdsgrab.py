@@ -22,7 +22,6 @@
 
 import sys
 import argparse
-import time
 import serial
 import serial.tools.list_ports
 
