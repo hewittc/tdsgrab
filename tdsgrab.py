@@ -55,11 +55,12 @@ class TDSGrab:
             print("Unable to disconnect from serial device: %s") % (msg)
 
     def grab_image(self, filename):
-        """Wait for an image and save to file"""
+        """Wait for an image and save to filename"""
         try:
             if self.serial.isOpen():
                 self.serial.flushInput()
 
+                # open file for writing
                 data_file = None
                 try:
                     data_file = open(filename, "w")
@@ -68,11 +69,13 @@ class TDSGrab:
 
                 print("Waiting for data")
                 while True:
+                    # look for start of data and write to file
                     data = self.serial.read(8)
                     if data != "":
                         print("Receiving data")
                         data_file.write(data)
                         while True:
+                            # continually read and then write to file until nothing left
                             data = self.serial.read(8)
                             if data != "":
                                 data_file.write(data)
@@ -80,13 +83,14 @@ class TDSGrab:
                                 break
                         break
 
+                # done with file
                 print("Data written to '%s'") % (filename)
                 data_file.close()
-                    
         except serial.SerialException, msg:
             print("Error reading image from serial device: %s") % (msg)
 
 class ListPorts(argparse.Action):
+    """List available serial ports"""
     def __call__(self, parser, namespace, action, option_string):
         print("available ports:")
         for port in serial.tools.list_ports.comports():
@@ -118,9 +122,10 @@ additional information:
 
     # verify baudrate
     if args.baud not in (300, 600, 1200, 2400, 4800, 9600, 19200):
-        print("Strange baudrate! Proceeding anyway.")
+        print("Strange baudrate, but proceeding anyway")
     baudrate = args.baud
 
+    # timeout for serial reads to not block forever
     timeout = 0.250
 
     # verify flow control method
@@ -131,6 +136,7 @@ additional information:
     elif args.flow == "sw":
         sofware_flagging = True
 
+    # start grabbing
     tdsgrab = TDSGrab(port=args.port, baudrate=args.baud, timeout=timeout, hardware_flagging=hardware_flagging, software_flagging=software_flagging)
     try:
         try:
