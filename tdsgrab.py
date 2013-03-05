@@ -25,7 +25,7 @@ import argparse
 import serial
 import serial.tools.list_ports
 
-class TDSGrab:
+class TDSGrab(object):
 
     def __init__(self, port, baudrate, timeout, hardware_flagging, software_flagging):
         self.port = port
@@ -39,19 +39,27 @@ class TDSGrab:
         """Connect to serial device"""
         try:
             if not self.serial.isOpen():
-                self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout, rtscts=self.hardware_flagging, xonxoff=self.software_flagging)
-                print("Connected to %s") % (self.port)
-        except serial.SerialException, msg:
-            print("Unable to connect to serial device: %s") % (msg)
+                self.serial = serial.Serial(
+                    self.port, 
+                    self.baudrate, 
+                    timeout=self.timeout, 
+                    rtscts=self.hardware_flagging, 
+                    xonxoff=self.software_flagging
+                )
+                print("connected to %s") % (self.port)
+        except serial.SerialException, e:
+            msg = "unable to connect to %s" % (self.port)
+            raise Exception(msg, e)
 
     def disconnect(self):
         """Disconnect from serial device"""
         try:
             if self.serial.isOpen():
                 self.serial.close()
-                print("Disconnected from %s") % (self.port)
-        except serial.SerialException, msg:
-            print("Unable to disconnect from serial device: %s") % (msg)
+                print("disconnected from %s") % (self.port)
+        except serial.SerialException, e:
+            msg = "unable to disconnect from %s" % (self.port)
+            raise Exception(msg, e)
 
     def grab_image(self, filename):
         """Wait for an image and save to filename"""
@@ -63,15 +71,16 @@ class TDSGrab:
                 data_file = None
                 try:
                     data_file = open(filename, "w")
-                except IOError, msg:
-                    print("Error opening '" + filename + "' for writing: %s") % (msg)
+                except IOError, e:
+                    msg = "error opening '%s' for writing" % (self.port)
+                    raise Exception(msg, e)
 
-                print("Waiting for data")
+                print("waiting for data")
                 while True:
                     # look for start of data and write to file
                     data = self.serial.read(8)
                     if data != "":
-                        print("Receiving data")
+                        print("receiving data")
                         data_file.write(data)
                         while True:
                             # continually read and then write to file until nothing left
@@ -83,10 +92,11 @@ class TDSGrab:
                         break
 
                 # done with file
-                print("Data written to '%s'") % (filename)
+                print("data written to '%s'") % (filename)
                 data_file.close()
-        except serial.SerialException, msg:
-            print("Error reading image from serial device: %s") % (msg)
+        except serial.SerialException, e:
+            msg = "Error reading image data from port"
+            raise Exception(msg, e)
 
 class ListPorts(argparse.Action):
     """List available serial ports"""
@@ -110,7 +120,11 @@ additional information:
      none               no flow control
   Using both hardware and software flow control together is not supported
 """
-    parser = argparse.ArgumentParser(description="Download images from Tektronix TDS oscilloscopes over RS-232 link.", epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description="Download images from Tektronix TDS oscilloscopes over RS-232 link.", 
+        epilog=epilog, 
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.1")
     parser.add_argument("-l", "--list", action=ListPorts, nargs=0, help="list available serial ports")
     parser.add_argument("-p", "--port", help="serial device to connect to (default: %(default)s)", default="/dev/ttyS0")
@@ -119,12 +133,20 @@ additional information:
     parser.add_argument("filename", help="filename to write to")
     args = parser.parse_args()
 
+    # verify port
+    ports = ()
+    for port in serial.tools.list_ports.comports():
+        ports = ports + (port[0],)
+    if args.port not in ports:
+        print("warning: port does not appear to be available... proceeding anyway")
+    port = args.port
+
     # verify baudrate
     if args.baud not in (300, 600, 1200, 2400, 4800, 9600, 19200):
-        print("Strange baudrate, but proceeding anyway")
+        print("warning: strange baudrate... proceeding anyway")
     baudrate = args.baud
 
-    # timeout for serial reads to not block forever
+    # timeout for serial read blocking in seconds
     timeout = 0.250
 
     # verify flow control method
@@ -135,14 +157,19 @@ additional information:
     elif args.flow == "sw":
         sofware_flagging = True
 
+    # assume filename is correct
+    filename = args.filename
+
     # start grabbing
-    tdsgrab = TDSGrab(port=args.port, baudrate=args.baud, timeout=timeout, hardware_flagging=hardware_flagging, software_flagging=software_flagging)
+    tdsgrab = TDSGrab(port, baudrate, timeout, hardware_flagging, software_flagging)
     try:
         try:
             tdsgrab.connect()
-            tdsgrab.grab_image(args.filename)
+            tdsgrab.grab_image(filename)
         finally:
             tdsgrab.disconnect()
+    except Exception, e:
+        print("%s (%s)") % (e.args[0], e.args[1])
     except KeyboardInterrupt:
         pass
 
