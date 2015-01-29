@@ -47,7 +47,7 @@ class TDSGrab(object):
                     xonxoff=self.software_flagging
                 )
                 print("connected to %s") % (self.port)
-        except serial.SerialException, e:
+        except serial.SerialException as e:
             msg = "unable to connect to %s" % (self.port)
             raise Exception(msg, e)
 
@@ -57,7 +57,7 @@ class TDSGrab(object):
             if self.serial.isOpen():
                 self.serial.close()
                 print("disconnected from %s") % (self.port)
-        except serial.SerialException, e:
+        except serial.SerialException as e:
             msg = "unable to disconnect from %s" % (self.port)
             raise Exception(msg, e)
 
@@ -71,7 +71,7 @@ class TDSGrab(object):
                 data_file = None
                 try:
                     data_file = open(filename, "w")
-                except IOError, e:
+                except IOError as e:
                     msg = "error opening '%s' for writing" % (self.port)
                     raise Exception(msg, e)
 
@@ -94,8 +94,8 @@ class TDSGrab(object):
                 # done with file
                 print("data written to '%s'") % (filename)
                 data_file.close()
-        except serial.SerialException, e:
-            msg = "Error reading image data from port"
+        except serial.SerialException as e:
+            msg = "error: problem reading image data from port"
             raise Exception(msg, e)
 
 class ListPorts(argparse.Action):
@@ -168,7 +168,7 @@ additional information:
             tdsgrab.grab_image(filename)
         finally:
             tdsgrab.disconnect()
-    except Exception, e:
+    except Exception as e:
         print("%s (%s)") % (e.args[0], e.args[1])
     except KeyboardInterrupt:
         pass
