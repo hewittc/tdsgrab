@@ -28,8 +28,8 @@ Tested with python 2.7.3 and Tektronix TDS684A.
       FLOW is expected to be one of the following:
          hw                 hardware flow control
          sw                 software flow control
+         both               both flow controls
          none               no flow control
-      Using both hardware and software flow control together is not supported
 
 ![Image](gfx/tdsgrab.png?raw=true)
 ![Image](gfx/hardcopy.png?raw=true)

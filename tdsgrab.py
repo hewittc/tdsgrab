@@ -22,8 +22,13 @@
 
 import sys
 import argparse
-import serial
-import serial.tools.list_ports
+
+try:
+    import serial
+    import serial.tools.list_ports
+except ImportError as e:
+    print("error: missing dependency (pyserial)")
+    sys.exit(-1)
 
 class TDSGrab(object):
 
@@ -117,8 +122,8 @@ additional information:
   FLOW is expected to be one of the following:
      hw                 hardware flow control
      sw                 software flow control
+     both               both flow controls
      none               no flow control
-  Using both hardware and software flow control together is not supported
 """
     parser = argparse.ArgumentParser(
         description="Download images from Tektronix TDS oscilloscopes over RS-232 link.", 
@@ -152,9 +157,9 @@ additional information:
     # verify flow control method
     hardware_flagging = False
     software_flagging = False
-    if args.flow == "hw":
+    if args.flow == "hw" or args.flow == "both":
         hardware_flagging = True
-    elif args.flow == "sw":
+    if args.flow == "sw" or args.flow == "both":
         sofware_flagging = True
 
     # assume filename is correct
