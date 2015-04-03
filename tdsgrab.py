@@ -84,13 +84,13 @@ class TDSGrab(object):
                 while True:
                     # look for start of data and write to file
                     data = self.serial.read(8)
-                    if data != "":
+                    if data:
                         print("receiving data")
                         data_file.write(data)
                         while True:
                             # continually read and then write to file until nothing left
                             data = self.serial.read(8)
-                            if data != "":
+                            if data:
                                 data_file.write(data)
                             else:
                                 break
@@ -155,12 +155,8 @@ additional information:
     timeout = 0.250
 
     # verify flow control method
-    hardware_flagging = False
-    software_flagging = False
-    if args.flow == "hw" or args.flow == "both":
-        hardware_flagging = True
-    if args.flow == "sw" or args.flow == "both":
-        sofware_flagging = True
+    hardware_flagging = args.flow in ("hw", "both")
+    software_flagging = args.flow in ("sw", "both")
 
     # assume filename is correct
     filename = args.filename
